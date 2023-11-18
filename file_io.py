@@ -57,10 +57,16 @@ def file_delete(img_index: int):
     """This function deletes an image and its associated data file"""
     cur_file, extension = os.path.splitext(os.path.basename(img_list[img_index]))
 
-    os.remove(os.path.join(source, cur_file + extension))
-    os.remove(os.path.join(source, cur_file + DATA_FILE_EXT))
+    try:
+        os.remove(os.path.join(source, cur_file + extension))
+        os.remove(os.path.join(source, cur_file + DATA_FILE_EXT))
+    except FileNotFoundError:
+        pass    # If some file does not exist, ignore that
+    except PermissionError:
+        raise   # Disk is write-protected!
 
 def disk_delete():
+    """"This function deletes all the images (and their associated data files) on a disk"""
     deleted = False
 
     for i in range(len(img_list)):

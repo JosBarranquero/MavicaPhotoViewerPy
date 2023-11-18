@@ -18,6 +18,7 @@ def main():
     io.file_import(output_path)
     if format:
         io.disk_delete()
+    print('Done!')
 
 if __name__ == "__main__":
    main()
