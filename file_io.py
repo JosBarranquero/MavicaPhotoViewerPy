@@ -2,6 +2,7 @@ import os
 import fnmatch
 from datetime import datetime
 import shutil
+import errors
 
 # File name constants
 IMAGE_FILE = "MVC-*.JPG"
@@ -12,9 +13,8 @@ source = None
 img_list = None
 
 def initialize(path: str):
-    """This function initializes the module"""
+    """This function initializes the module, that is, setting the source directory and trying to load its contents"""
     global source
-    global img_list
     source = path
     
     file_load()
@@ -30,12 +30,15 @@ def file_load():
         if fnmatch.fnmatch(file, IMAGE_FILE):
             img_list.append(file)
 
+    # If no image files, disk is empty
+    if (len(img_list) == 0):
+        raise errors.EmptyDiskError
+
 def file_import(output: str, folder_format: str = "%Y %m %d"):
     """This function imports the images to the output directory, creating a folder based on the images dates"""
     for i in range(len(img_list)):
         # Output directory
         folder_path = os.path.join(output, datetime.fromtimestamp(os.path.getmtime(os.path.join(source, img_list[i]))).strftime(folder_format))
-        #folder_path = check_path(folder_path)
 
         # Check if file does not exist and create if necessary
         if not (os.path.exists(folder_path)):
@@ -50,8 +53,10 @@ def file_import(output: str, folder_format: str = "%Y %m %d"):
             cur_file, extension = os.path.splitext(os.path.basename(img_list[i]))
             cur_file += f" ({file_duplicate})"
             file_duplicate += 1
-
-        shutil.copy2(os.path.join(source, img_list[i]), os.path.join(folder_path, cur_file + extension))
+        try:
+            shutil.copy2(os.path.join(source, img_list[i]), os.path.join(folder_path, cur_file + extension))
+        except FileNotFoundError:
+            raise    # If some file does not exist, something has happened to the disk contents
 
 def file_delete(img_index: int):
     """This function deletes an image and its associated data file"""
@@ -69,26 +74,15 @@ def disk_delete():
     """"This function deletes all the images (and their associated data files) on a disk"""
     deleted = False
 
-    for i in range(len(img_list)):
-        file_delete(i)
+    img_num = len(img_list)
 
-    deleted = True
+    if (img_num > 0):
+        for i in range(img_num):
+            file_delete(i)
+
+        deleted = True
 
     return deleted
             
-def image_count():
-    """This function counts the number of images stored in the disk (source)"""
-    total = 0
-    
-    file_list = os.listdir(source)
-
-    for file in file_list:
-        file = file.upper()
-        if fnmatch.fnmatch(file, IMAGE_FILE):
-            total += 1
-
-    return total
-
-
 if __name__ == "__main__":
     print("This script is not desingned to be standalone.")
