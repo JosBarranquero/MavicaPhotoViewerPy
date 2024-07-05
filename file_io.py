@@ -12,6 +12,9 @@ DATA_FILE_EXT = ".411" # Mavica internal data files extension
 source = None
 img_list = None
 
+# Counter for the images
+counter = 0
+
 def initialize(path: str):
     """This function initializes the module, that is, setting the source directory and trying to load its contents"""
     global source
@@ -21,7 +24,7 @@ def initialize(path: str):
 
 def file_load():
     """This function loads the images filenames to a list"""
-    file_list = os.listdir(source)
+    file_list = sorted(os.listdir(source))
     global img_list
     img_list = []
 
@@ -33,6 +36,30 @@ def file_load():
     # If no image files, disk is empty
     if (len(img_list) == 0):
         raise errors.EmptyDiskError
+
+def get_file(direction: int):
+    """This function gets one file name
+       1 advances, -1 goes back, and 0 retrieves the current image"""
+    if (direction < -1) or (direction > 1):
+        raise errors.InvalidDirection
+    global counter
+    img_list
+    file_name = ""
+
+    try:
+        file_name = os.path.join(source, img_list[counter])
+    except IndexError:
+        # If this happens, we are out of bounds
+        if (direction == -1):
+            counter = len(img_list) - 1
+        else:
+            counter = 0
+        # After getting back inbounds, return it again
+        file_name = get_file(0)     # fuck yeah, make it recursive!
+
+    counter += direction
+    
+    return file_name
 
 def file_import(output: str, folder_format: str = "%Y %m %d"):
     """This function imports the images to the output directory, creating a folder based on the images dates"""
@@ -85,4 +112,4 @@ def disk_delete():
     return deleted
             
 if __name__ == "__main__":
-    print("This script is not desingned to be standalone.")
+    print("This script is not designed to be standalone.")
